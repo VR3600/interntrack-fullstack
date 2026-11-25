@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InternTrack — Modern Internship & Job Tracker</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+<body>
+  <div class="aurora-bg">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <button id="authThemeBtn" class="btn btn-glass btn-icon auth-theme-float" title="Switch Theme">
+    ☀️
+  </button>
+
+  <main class="auth-page">
+    <!-- Left Animated Hero Showcase -->
+    <section class="auth-showcase">
+      <div class="showcase-pill">✨ Full-Stack Career Command Center</div>
+      <h1>
+        Track every <span class="gradient-text">internship, interview & offer</span> in one place.
+      </h1>
+      <p>
+        Spreadsheets ko bolo bye. Apni saari applications ko drag-and-drop Kanban board, live analytics, aur deadline alerts ke saath effortlessly manage karo.
+      </p>
+
+      <div class="mock-stack">
+        <div class="mock-card">
+          <div class="mock-left">
+            <div class="mock-dot" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">R</div>
+            <div>
+              <strong>Razorpay</strong>
+              <span>Full-Stack Intern • ₹45,000/mo</span>
+            </div>
+          </div>
+          <span class="status-pill status-Offer">🏆 Offer</span>
+        </div>
+
+        <div class="mock-card">
+          <div class="mock-left">
+            <div class="mock-dot" style="background: linear-gradient(135deg, #f59e0b, #ef4444);">G</div>
+            <div>
+              <strong>Google India</strong>
+              <span>SWE Intern • Bengaluru</span>
+            </div>
+          </div>
+          <span class="status-pill status-Interview">🎯 Interview</span>
+        </div>
+
+        <div class="mock-card">
+          <div class="mock-left">
+            <div class="mock-dot" style="background: linear-gradient(135deg, #8b5cf6, #ec4899);">Z</div>
+            <div>
+              <strong>Zomato</strong>
+              <span>Frontend Intern • Remote</span>
+            </div>
+          </div>
+          <span class="status-pill status-Online-Test">⚡ Online Test</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Right Glass Auth Card -->
+    <section class="auth-card spotlight-card">
+      <div class="brand-header">
+        <div class="brand-badge">IT</div>
+        <h2 id="authTitle">Welcome back</h2>
+        <p id="authSubtitle">Sign in to access your private application dashboard</p>
+      </div>
+
+      <div class="auth-tabs" id="authTabsWrap">
+        <div class="tab-slider"></div>
+        <button type="button" class="auth-tab active" id="tabLogin">Sign In</button>
+        <button type="button" class="auth-tab" id="tabSignup">Create Account</button>
+      </div>
+
+      <div id="authError" class="alert-error hidden"></div>
+
+      <form id="authForm">
+        <div class="form-group hidden" id="nameGroup">
+          <label for="nameInput">Full Name</label>
+          <input
+            type="text"
+            id="nameInput"
+            class="form-control"
+            placeholder="e.g., Aarav Verma"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="emailInput">Email Address</label>
+          <input
+            type="email"
+            id="emailInput"
+            class="form-control"
+            placeholder="you@example.com"
+            required
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="passwordInput">Password</label>
+          <div class="input-wrap">
+            <input
+              type="password"
+              id="passwordInput"
+              class="form-control"
+              placeholder="Minimum 6 characters"
+              minlength="6"
+              required
+            />
+            <button type="button" class="password-toggle" id="togglePasswordBtn">Show</button>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" id="authSubmitBtn" style="width: 100%; padding: 12px; margin-top: 6px;">
+          Sign In →
+        </button>
+      </form>
+    </section>
+  </main>
+
+  <script type="module">
+    import {
+      auth,
+      createUserWithEmailAndPassword,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      updateProfile,
+    } from '/firebase-client.js';
+
+    // Theme Setup (Dark default for rich Aurora vibe)
+    const authThemeBtn = document.getElementById('authThemeBtn');
+    function applyTheme(theme) {
+      document.documentElement.setAttribute('data-theme', theme);
+      localStorage.setItem('interntrack_theme', theme);
+      authThemeBtn.textContent = theme === 'dark' ? '☀️' : '🌙';
+    }
+    applyTheme(localStorage.getItem('interntrack_theme') || 'dark');
+
+    authThemeBtn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+
+    // Spotlight glow effect on Auth Card
+    document.addEventListener('mousemove', (e) => {
+      const card = e.target.closest('.spotlight-card');
+      if (!card) return;
+      const rect = card.getBoundingClientRect();
+      card.style.setProperty('--mx', `${e.clientX - rect.left}px`);
+      card.style.setProperty('--my', `${e.clientY - rect.top}px`);
+    });
+
+    // Redirect if already logged in
+    onAuthStateChanged(auth, (user) => {
+      if (user) window.location.href = '/index.html';
+    });
+
+    let isSignup = false;
+    const authTabsWrap = document.getElementById('authTabsWrap');
+    const tabLogin = document.getElementById('tabLogin');
+    const tabSignup = document.getElementById('tabSignup');
+    const authTitle = document.getElementById('authTitle');
+    const authSubtitle = document.getElementById('authSubtitle');
+    const nameGroup = document.getElementById('nameGroup');
+    const nameInput = document.getElementById('nameInput');
+    const emailInput = document.getElementById('emailInput');
+    const passwordInput = document.getElementById('passwordInput');
+    const togglePasswordBtn = document.getElementById('togglePasswordBtn');
+    const authSubmitBtn = document.getElementById('authSubmitBtn');
+    const authError = document.getElementById('authError');
+    const authForm = document.getElementById('authForm');
+
+    function showError(msg) {
+      authError.textContent = msg;
+      authError.classList.remove('hidden');
+    }
+
+    function switchMode(signupMode) {
+      isSignup = signupMode;
+      authError.classList.add('hidden');
+      authTabsWrap.classList.toggle('signup-active', isSignup);
+      tabLogin.classList.toggle('active', !isSignup);
+      tabSignup.classList.toggle('active', isSignup);
+      nameGroup.classList.toggle('hidden', !isSignup);
+      nameInput.required = isSignup;
+      authTitle.textContent = isSignup ? 'Create your workspace' : 'Welcome back';
+      authSubtitle.textContent = isSignup
+        ? 'Start tracking internships, interviews & offers for free'
+        : 'Sign in to access your private application dashboard';
+      authSubmitBtn.textContent = isSignup ? 'Create Free Account →' : 'Sign In →';
+    }
+
+    tabLogin.addEventListener('click', () => switchMode(false));
+    tabSignup.addEventListener('click', () => switchMode(true));
+
+    togglePasswordBtn.addEventListener('click', () => {
+      const isPwd = passwordInput.type === 'password';
+      passwordInput.type = isPwd ? 'text' : 'password';
+      togglePasswordBtn.textContent = isPwd ? 'Hide' : 'Show';
+    });
+
+    authForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      authError.classList.add('hidden');
+
+      const email = emailInput.value.trim();
+      const password = passwordInput.value;
+      const fullName = nameInput.value.trim();
+
+      authSubmitBtn.disabled = true;
+      authSubmitBtn.textContent = isSignup ? 'Creating account...' : 'Signing in...';
+
+      try {
+        if (isSignup) {
+          const cred = await createUserWithEmailAndPassword(auth, email, password);
+          if (fullName) {
+            await updateProfile(cred.user, { displayName: fullName });
+          }
+        } else {
+          await signInWithEmailAndPassword(auth, email, password);
+        }
+        window.location.href = '/index.html';
+      } catch (err) {
+        const errorMap = {
+          'auth/email-already-in-use': 'Ye email pehle se registered hai. Sign In try karo.',
+          'auth/invalid-credential': 'Email ya password galat hai.',
+          'auth/user-not-found': 'Is email se koi account nahi mila.',
+          'auth/wrong-password': 'Galat password daala hai.',
+          'auth/weak-password': 'Password kam se kam 6 characters ka hona chahiye.',
+          'auth/invalid-email': 'Sahi email address enter karo.',
+        };
+        showError(errorMap[err.code] || err.message);
+        authSubmitBtn.disabled = false;
+        authSubmitBtn.textContent = isSignup ? 'Create Free Account →' : 'Sign In →';
+      }
+    });
+  </script>
+</body>
+</html>

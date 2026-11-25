@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>InternTrack — Smart Application Dashboard</title>
+  <link rel="stylesheet" href="/style.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+</head>
+<body>
+  <!-- Animated Aurora Background -->
+  <div class="aurora-bg">
+    <div class="aurora-orb orb-1"></div>
+    <div class="aurora-orb orb-2"></div>
+    <div class="aurora-orb orb-3"></div>
+    <div class="grid-overlay"></div>
+  </div>
+
+  <!-- Offer Celebration Confetti Canvas -->
+  <canvas id="confettiCanvas"></canvas>
+
+  <!-- Splash Auth Loader -->
+  <div id="authLoader" class="fullscreen-loader">
+    <div class="loader-logo">IT</div>
+    <p style="color: var(--text-muted); font-weight: 600; font-size: 0.92rem;">
+      Launching your workspace...
+    </p>
+  </div>
+
+  <!-- Main App Shell -->
+  <div id="appShell" class="hidden">
+    <!-- Floating Glass Navbar -->
+    <div class="navbar-wrap">
+      <header class="navbar">
+        <div class="nav-brand">
+          <div class="nav-logo">IT</div>
+          <div>
+            <h2>InternTrack</h2>
+            <span>Career Command Center</span>
+          </div>
+        </div>
+
+        <div class="nav-actions">
+          <button id="loadDemoNavBtn" class="btn btn-glass" title="Add Sample Applications">
+            ✨ Demo Data
+          </button>
+          <button id="exportCsvBtn" class="btn btn-glass" title="Export as CSV">
+            ⬇ CSV
+          </button>
+          <button id="themeToggleBtn" class="btn btn-glass btn-icon" title="Switch Dark/Light Mode">
+            ☀️
+          </button>
+
+          <div class="user-pill">
+            <div id="userAvatar" class="user-avatar">U</div>
+            <div class="user-meta">
+              <strong id="userNameDisplay">Student</strong>
+              <small id="userEmailDisplay">user@email.com</small>
+            </div>
+          </div>
+
+          <button id="logoutBtn" class="btn btn-glass">Logout</button>
+        </div>
+      </header>
+    </div>
+
+    <main class="container">
+      <!-- Greeting Hero + Monthly Goal Bar -->
+      <section class="hero-banner spotlight-card">
+        <div class="hero-greeting">
+          <h1 id="greetingText">Welcome back! 👋</h1>
+          <p id="greetingSub">Let's land your next dream internship — keep your pipeline moving.</p>
+        </div>
+
+        <div class="goal-widget">
+          <div class="goal-top">
+            <span id="goalLabel">🎯 Monthly Goal: 0 / 15</span>
+            <button type="button" id="editGoalBtn" class="goal-edit-btn">Edit Goal</button>
+          </div>
+          <div class="goal-bar-track">
+            <div id="goalBarFill" class="goal-bar-fill"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KPI Stat Cards -->
+      <section class="stats-grid">
+        <div class="stat-card spotlight-card">
+          <div>
+            <div class="stat-label">Total Applied</div>
+            <div class="stat-value" id="statTotal" data-val="0">0</div>
+            <div class="stat-sub" id="statActiveRate">0% active pipeline</div>
+          </div>
+          <div class="stat-icon icon-blue">📋</div>
+        </div>
+
+        <div class="stat-card spotlight-card">
+          <div>
+            <div class="stat-label">Interviews & Tests</div>
+            <div class="stat-value" id="statInterview" data-val="0">0</div>
+            <div class="stat-sub">Active assessment stage</div>
+          </div>
+          <div class="stat-icon icon-amber">🎯</div>
+        </div>
+
+        <div class="stat-card spotlight-card">
+          <div>
+            <div class="stat-label">Offers Won</div>
+            <div class="stat-value" id="statOffer" data-val="0">0</div>
+            <div class="stat-sub" id="statTopStipend">Top: ₹0/mo</div>
+          </div>
+          <div class="stat-icon icon-green">🏆</div>
+        </div>
+
+        <div class="stat-card spotlight-card">
+          <div>
+            <div class="stat-label">Rejected</div>
+            <div class="stat-value" id="statRejected" data-val="0">0</div>
+            <div class="stat-sub">Lessons for next round</div>
+          </div>
+          <div class="stat-icon icon-red">📉</div>
+        </div>
+      </section>
+
+      <!-- Analytics Chart + Upcoming Deadlines -->
+      <section class="insights-grid">
+        <div class="panel spotlight-card">
+          <div class="panel-header">
+            <h3>📊 Pipeline Breakdown</h3>
+            <span class="panel-badge" id="avgStipendBadge">Avg: ₹0/mo</span>
+          </div>
+          <div class="chart-box">
+            <canvas id="statusChart"></canvas>
+            <p id="chartEmptyState" class="hidden" style="color: var(--text-muted); font-size: 0.9rem;">
+              Add applications to unlock live analytics.
+            </p>
+          </div>
+        </div>
+
+        <div class="panel spotlight-card">
+          <div class="panel-header">
+            <h3>⏰ Upcoming Deadlines</h3>
+            <span class="panel-badge">Next 5</span>
+          </div>
+          <div id="upcomingDeadlinesList" class="deadline-list"></div>
+        </div>
+      </section>
+
+      <!-- Toolbar: Search, Filters, Grid/Kanban Toggle, Add -->
+      <section class="toolbar">
+        <div class="toolbar-filters">
+          <input
+            type="text"
+            id="searchInput"
+            class="form-control search-box"
+            placeholder="🔍 Search company, role, location, notes..."
+          />
+
+          <select id="statusFilter" class="form-control">
+            <option value="All">All Statuses</option>
+            <option value="Applied">Applied</option>
+            <option value="Online Test">Online Test</option>
+            <option value="Interview">Interview</option>
+            <option value="Offer">Offer</option>
+            <option value="Rejected">Rejected</option>
+          </select>
+
+          <select id="sortSelect" class="form-control">
+            <option value="newest">Sort: Newest</option>
+            <option value="deadline">Sort: Deadline</option>
+            <option value="stipend">Sort: Stipend (₹)</option>
+          </select>
+        </div>
+
+        <div class="toolbar-right">
+          <div class="view-switcher">
+            <button type="button" class="view-btn active" id="viewGridBtn">⊞ Grid</button>
+            <button type="button" class="view-btn" id="viewKanbanBtn">⫿ Kanban</button>
+          </div>
+          <button id="addAppBtn" class="btn btn-primary">+ New Application</button>
+        </div>
+      </section>
+
+      <div class="results-bar">
+        <span id="resultsCount">Showing 0 applications</span>
+        <span id="kanbanTip" class="hidden">💡 Tip: Drag any card into another column to update status instantly!</span>
+      </div>
+
+      <!-- Skeleton Shimmer Loading State -->
+      <div id="loadingCards" class="skeleton-grid hidden">
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+        <div class="skeleton-card"></div>
+      </div>
+
+      <!-- Empty State -->
+      <div id="emptyState" class="empty-state hidden">
+        <div class="empty-icon">🚀</div>
+        <h3>Your pipeline is ready for takeoff</h3>
+        <p>Apni pehli application add karo ya 1-click mein sample internships load karke dashboard explore karo.</p>
+        <div class="empty-actions">
+          <button id="emptyAddBtn" class="btn btn-primary">+ Add First Application</button>
+          <button id="emptyDemoBtn" class="btn btn-glass">✨ Load Sample Demo Data</button>
+        </div>
+      </div>
+
+      <!-- Grid View -->
+      <section id="applicationsGrid" class="apps-grid"></section>
+
+      <!-- Kanban Drag & Drop View -->
+      <section id="kanbanBoard" class="kanban-board hidden"></section>
+    </main>
+  </div>
+
+  <!-- Add / Edit Application Modal -->
+  <div id="appModal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle">Add New Application</h3>
+        <button type="button" class="close-btn" id="closeModalBtn">&times;</button>
+      </div>
+
+      <form id="appForm">
+        <input type="hidden" id="appId" />
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="companyInput">Company Name *</label>
+            <input type="text" id="companyInput" class="form-control" placeholder="e.g., Razorpay, Google" required />
+          </div>
+
+          <div class="form-group">
+            <label for="roleInput">Role / Position *</label>
+            <input type="text" id="roleInput" class="form-control" placeholder="e.g., Full-Stack Intern" required />
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="statusInput">Status</label>
+            <select id="statusInput" class="form-control">
+              <option value="Applied">Applied</option>
+              <option value="Online Test">Online Test</option>
+              <option value="Interview">Interview</option>
+              <option value="Offer">Offer</option>
+              <option value="Rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="stipendInput">Monthly Stipend (₹)</label>
+            <input type="number" id="stipendInput" class="form-control" placeholder="e.g., 30000" min="0" />
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-group">
+            <label for="locationInput">Location / Mode</label>
+            <input type="text" id="locationInput" class="form-control" placeholder="e.g., Remote, Bengaluru" />
+          </div>
+
+          <div class="form-group">
+            <label for="deadlineInput">Deadline / Interview Date</label>
+            <input type="date" id="deadlineInput" class="form-control" />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="linkInput">Job / Portal URL</label>
+          <input type="url" id="linkInput" class="form-control" placeholder="https://careers.company.com/..." />
+        </div>
+
+        <div class="form-group">
+          <label for="notesInput">Notes / Rounds / Prep</label>
+          <textarea id="notesInput" class="form-control" placeholder="Referral info, tech stack, interview questions..."></textarea>
+        </div>
+
+        <div class="modal-actions">
+          <button type="button" class="btn btn-glass" id="cancelModalBtn">Cancel</button>
+          <button type="submit" class="btn btn-primary" id="saveAppBtn">Save Application</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div id="deleteModal" class="modal-overlay hidden">
+    <div class="modal-card modal-sm">
+      <div class="modal-header">
+        <h3>Delete Application?</h3>
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.9rem;">
+        Kya tum <strong id="deleteCompanyName" style="color: var(--text);"></strong> ko permanently delete karna chahte ho?
+      </p>
+      <div class="modal-actions">
+        <button type="button" class="btn btn-glass" id="cancelDeleteBtn">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Yes, Delete</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script type="module" src="/app.js"></script>
+</body>
+</html>
